@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+runtime/
+checkpoints/
+logs/
+results/
+data/
+models/
+third_party/

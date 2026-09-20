@@ -1,0 +1,24 @@
+# Tested with: Python 3.11, torch 2.13 (CUDA 13), transformers 5.17.0, vllm 0.29.0, lm_eval 0.4.12 on 4 x 96 GB GPUs.
+# Core: codebook bank, allocation, Stage 3 (enough to produce a quantized checkpoint)
+torch>=2.4
+transformers>=5.16,<5.18        # probe_termination_routing.py imports transformers.models.qwen3_5_moe.modeling_qwen3_5_moe,
+                                # a private path that moves between minor versions; 5.17.0 is the tested version
+safetensors>=0.4
+numpy>=1.26
+accelerate>=0.30
+huggingface_hub>=0.30           # `hf download` / snapshot_download in the drivers
+
+# Calibration corpus and set (steps 1-2)
+datasets>=2.19
+pyarrow>=15
+
+# Evaluation (step 8: the sampled avg@3 protocol; GPQA scoring reuses lm_eval's stop-sequence handling)
+vllm>=0.9
+lm_eval>=0.4.5
+math_verify>=0.5
+latex2sympy2_extended>=1.0
+
+# LiveCodeBench only: the grader is cloned into third_party/ by 08_evaluate.sh (commit 28fef95); it needs no extra packages.
+
+# Figures (plot_termination_routing.py)
+matplotlib>=3.8
