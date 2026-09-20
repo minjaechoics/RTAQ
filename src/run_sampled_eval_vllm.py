@@ -277,6 +277,8 @@ def main() -> None:
     parser.add_argument("--max_num_seqs", type=int, default=64)
     parser.add_argument("--gpu_memory_utilization", type=float, default=0.92)
     parser.add_argument("--moe_backend", default="triton")
+    parser.add_argument("--disable_flashinfer_autotune", action="store_true",
+                        help="skip FlashInfer warmup autotuning after a tuned cache has been created")
     parser.add_argument("--limit", type=int, default=None, help="first N problems (smoke tests)")
     parser.add_argument("--score_only", action="store_true")
     parser.add_argument("--no_score", action="store_true", help="generate only; score later with --score_only")
@@ -309,6 +311,8 @@ def main() -> None:
                           limit_mm_per_prompt={"image": 0, "video": 0})
         if args.moe_backend:
             llm_kwargs["moe_backend"] = args.moe_backend
+        if args.disable_flashinfer_autotune:
+            llm_kwargs["enable_flashinfer_autotune"] = False
         print(f"[vllm] LLM kwargs: {llm_kwargs}", flush=True)
         engine = LLM(**llm_kwargs).llm_engine
 

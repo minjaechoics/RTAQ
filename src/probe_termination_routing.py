@@ -82,7 +82,7 @@ def main() -> None:
     parser.add_argument("--loop_rows", type=Path, default=None, help="json with per-problem loop_start (optional)")
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--arch", choices=("qwen36", "nemotron_h", "qwen3_next"), default="qwen36",
+    parser.add_argument("--arch", choices=("qwen36", "qwen3_moe", "nemotron_h", "qwen3_next"), default="qwen36",
                         help="qwen36: Qwen3.6 MoE (router at language_model.layers[i].mlp.gate, chunked forward with "
                              "KV cache); nemotron_h: NVIDIA Nemotron 3 Nano hybrid Mamba/attention/MoE (router at "
                              "model.layers[i].mixer.gate of the MoE blocks only; whole sequence in one forward, "
@@ -152,6 +152,28 @@ def main() -> None:
             assert isinstance(router, Qwen3_5MoeTopKRouter)
         n_experts, top_k = 256, 8
         think_close_id = THINK_CLOSE_ID
+    elif args.arch == "qwen3_moe":
+        from transformers import AutoModelForCausalLM
+        from transformers.models.qwen3_moe.modeling_qwen3_moe import Qwen3MoeTopKRouter
+
+        model = AutoModelForCausalLM.from_pretrained(
+            args.model_dir,
+            dtype=torch.bfloat16,
+            low_cpu_mem_usage=True,
+            device_map="balanced" if args.device in ("auto", "balanced") else {"": args.device},
+        )
+        model.eval()
+        routers = [m for _, m in model.named_modules() if isinstance(m, Qwen3MoeTopKRouter)]
+        if not routers:
+            raise RuntimeError("No Qwen3MoeTopKRouter modules found")
+        n_layers = len(routers)
+        n_experts, top_k = int(routers[0].num_experts), int(routers[0].top_k)
+        think_close_id = tokenizer.convert_tokens_to_ids("</think>")
+        print(
+            f"[probe] qwen3_moe: {n_layers} MoE layers, {n_experts} experts, "
+            f"top-{top_k}, </think> id {think_close_id}",
+            flush=True,
+        )
     elif args.arch == "qwen3_next":
         from transformers import AutoModelForCausalLM
         from transformers.models.qwen3_next.modeling_qwen3_next import Qwen3NextTopKRouter
