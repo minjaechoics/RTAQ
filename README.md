@@ -74,12 +74,6 @@ budget, `LEVELS` (3,4,5,6,7,8,9), `PIN` to allocate with a different pin file, `
 * Sampling follows the Qwen model card (temperature 0.7, top_p 0.8, top_k 20, presence_penalty 1.5), three samples per
   problem; an answer is credited only when the response stopped on its own inside the cap.
 
-## Pin selection and held-out data
-
-Pins are selected from MATH-500 traces only (`05_find_termination_experts.sh`), so GPQA-Diamond is never used for any
-calibration or selection decision. The paper's reference pin set (223 experts) was the union over MATH-500 and
-GPQA-Diamond traces; the MATH-500-only rule selects 175 of those 223 experts. See `docs/NOTES.md`.
-
 ## Layout
 
 ```
@@ -90,13 +84,6 @@ assets/              gpqa198_choice_order.json
 docs/NOTES.md        how this tree relates to the paper's runs, and what is still open
 requirements.txt     tested versions in the header
 ```
-
-## What this code does not do
-
-* It does not fine-tune. Every stage is training-free and reads only forward and first-order information.
-* It does not quantize anything but the routed experts. Attention, routers, shared experts, embeddings and the LM head
-  stay BF16.
-* It ships no checkpoints or data; everything is rebuilt from public sources with the scripts above.
 
 ## License
 
